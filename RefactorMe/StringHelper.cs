@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using StackExchange.Redis;
 using System;
 
 namespace RefactorMe
@@ -24,11 +25,19 @@ namespace RefactorMe
         }
 
         // TODO: Implement redis server that can be consumed by the application
-        public static string GetIncrement(this string type)
+        public static string GetIncrement(this string type, IDatabase redisService)
         {
-            // Need to get this increment from Redis
-            return new Random().Next(100)
-                        .ToString();
+            var value = redisService.StringGet(type);
+            int currentValue = 1;
+            if (!value.HasValue)
+                redisService.StringSet(type, currentValue);
+            else
+            {
+                currentValue = ((int)value);
+                redisService.StringSet(type, ++currentValue);
+            }
+
+            return currentValue.ToString().PadLeft(2, '0');
         }
 
         public static string GetValueFromEntityObject(this string attribute, object entity)

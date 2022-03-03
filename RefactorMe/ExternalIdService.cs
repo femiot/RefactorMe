@@ -3,6 +3,7 @@ using Opsi.Architecture;
 using Opsi.Cloud.Core.Interface;
 using Opsi.Cloud.Core.Model;
 using RefactorMe;
+using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,12 +15,14 @@ namespace Opsi.Cloud.Core
     public class ExternalIdService : IExternalIdGeneratorService
     {
         private readonly ILogger<ExternalIdService> _logger;
+        private readonly IDatabase _redis;
         private readonly string _regExMatch = @"({[a-z]*:[^:]*})";
 
         public ExternalIdService(
-          ILogger<ExternalIdService> logger)
+          ILogger<ExternalIdService> logger, IDatabase redis)
         {
             _logger = logger;
+            _redis = redis;
         }
 
         public async Task<ServiceActionResult> GenerateAsync(List<Dictionary<string, object>> entities, TypeMetadata typeMetadata)
@@ -66,7 +69,7 @@ namespace Opsi.Cloud.Core
                             break;
 
                         case "increment":
-                            sb.Append(args[1].GetIncrement());
+                            sb.Append(args[1].GetIncrement(_redis));
                             break;
 
                         case "entity":
